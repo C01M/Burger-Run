@@ -38,3 +38,24 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
+
+// libGDX ships its native libraries inside jars; unpack each ABI where AGP looks for JNI libs.
+val gdxAbis = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+val gdxNatives = configurations.create("gdxNatives")
+dependencies {
+    implementation(libs.gdx.core)
+    implementation(libs.gdx.backend.android)
+    gdxAbis.forEach { abi ->
+        gdxNatives("com.badlogicgames.gdx:gdx-platform:${libs.versions.gdx.get()}:natives-$abi")
+    }
+}
+val copyGdxNatives = tasks.register<Copy>("copyGdxNatives") {
+    gdxAbis.forEach { abi ->
+        from(gdxNatives.filter { it.name.endsWith("natives-$abi.jar") }.elements.map { files -> files.map { zipTree(it) } }) {
+            include("*.so")
+            into(abi)
+        }
+    }
+    into(layout.projectDirectory.dir("src/main/jniLibs"))
+}
+tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(copyGdxNatives) }
