@@ -1326,7 +1326,7 @@ public final class GameScreen extends Screen implements ShiftManager.Listener {
             float a = .55f + .45f * (float) Math.sin(time * 6);
             G.rrectLine(1, PY + 1, 108, TRASH_Y - PY - 4, 12, ((int) (a * 255) << 24) | 0xFFD34D);
         }
-        drawGesture(g);
+        if (drag == Kind.NONE || !dragMoved) drawGesture(g); // don't demonstrate over the player's own hand
 
         G.panel(x, y, w, h, 16, 0xF7FFF8E6, G.DARK);
         G.rrect(x + 16, y - 11, 100, 22, 9, G.KETCHUP);
