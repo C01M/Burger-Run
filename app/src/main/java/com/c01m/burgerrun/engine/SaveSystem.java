@@ -19,6 +19,7 @@ public final class SaveSystem {
     public static final class Settings {
         public float master = .8f, music = .45f, sfx = .8f;
         public boolean fullscreen = true, stretch = false, hints = true;
+        public boolean infiniteMoney = false; // debug cheat, only honoured in debug builds
         public int difficulty = 1; // 0 relaxed, 1 normal, 2 hard
 
         public double difficultyMult() { return difficulty == 0 ? 1.25 : difficulty == 2 ? .8 : 1; }
@@ -27,7 +28,11 @@ public final class SaveSystem {
     private final AtomicFile saveFile, settingsFile;
     public final Settings settings = new Settings();
 
+    /** True only for debuggable (debug) builds; gates cheats so release builds never show them. */
+    public final boolean debugBuild;
+
     public SaveSystem(Context ctx) {
+        debugBuild = (ctx.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         saveFile = new AtomicFile(new File(ctx.getFilesDir(), "save.json"));
         settingsFile = new AtomicFile(new File(ctx.getFilesDir(), "settings.json"));
         loadSettings();
@@ -145,6 +150,7 @@ public final class SaveSystem {
             settings.stretch = o.optBoolean("stretch", settings.stretch);
             settings.hints = o.optBoolean("hints", settings.hints);
             settings.difficulty = o.optInt("difficulty", settings.difficulty);
+            settings.infiniteMoney = o.optBoolean("infiniteMoney", false);
         } catch (JSONException e) {
             // keep defaults when the settings file is damaged
         }
@@ -154,7 +160,7 @@ public final class SaveSystem {
         try {
             write(settingsFile, new JSONObject().put("master", settings.master).put("music", settings.music).put("sfx", settings.sfx)
                     .put("fullscreen", settings.fullscreen).put("stretch", settings.stretch).put("hints", settings.hints)
-                    .put("difficulty", settings.difficulty).toString());
+                    .put("difficulty", settings.difficulty).put("infiniteMoney", settings.infiniteMoney).toString());
         } catch (JSONException e) {
             // values are always finite here
         }

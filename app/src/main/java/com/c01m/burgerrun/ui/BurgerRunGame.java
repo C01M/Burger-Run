@@ -144,12 +144,23 @@ public final class BurgerRunGame implements ApplicationListener {
         }
     }
 
+    public static final double CHEAT_MONEY = 1_000_000;
+
+    /** Debug cheat: is infinite money active right now? Never true in release builds. */
+    public boolean infiniteMoney() { return saves.debugBuild && settings.infiniteMoney; }
+
+    /** Keeps cash topped up while the debug cheat is on (does not count toward stats). */
+    public void topUpCheat() {
+        if (save != null && infiniteMoney() && save.money < CHEAT_MONEY) save.money = CHEAT_MONEY;
+    }
+
     @Override public void resize(int w, int h) { updateViewport(w, h); }
 
     @Override public void render() {
         float dt = Math.min(Gdx.graphics.getDeltaTime(), .05f);
         Gdx.gl.glClearColor(.16f, .1f, .06f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        topUpCheat();
         if (modal == null) screen.update(dt);
         viewport.apply();
         batch.setProjectionMatrix(camera.combined);

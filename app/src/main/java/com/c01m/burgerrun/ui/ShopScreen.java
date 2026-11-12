@@ -55,7 +55,9 @@ public final class ShopScreen extends Screen {
 
     private void buy(Content.UpgradeDef u) {
         SaveData d = game.save;
+        game.topUpCheat();
         if (Progression.buy(d, u)) {
+            game.topUpCheat();
             game.audio.play("buy");
             flashed = u;
             flash = .6f;
@@ -69,7 +71,7 @@ public final class ShopScreen extends Screen {
         SaveData d = game.save;
         G.backdrop(Art.menuBackground());
         G.title("UPGRADE SHOP", 30, 38, 46, G.MUSTARD, G.DARK, -1);
-        G.title(G.money(d.money), 980, 38, 42, G.WHITE, G.GREEN, 1);
+        G.title(game.infiniteMoney() ? "∞ DEBUG" : G.money(d.money), 980, 38, 42, G.WHITE, G.GREEN, 1);
         for (int i = 0; i < Content.UPGRADE_CATS.length; i++) buttons.get(i).color = i == tab ? G.KETCHUP : G.TEAL;
         for (int i = 0; i < shown.size(); i++) card(shown.get(i), cardX(i), cardY(i), d);
         drawButtons();

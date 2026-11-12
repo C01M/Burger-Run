@@ -13,6 +13,7 @@ public final class OptionsScreen extends Screen {
     private final SaveSystem.Settings s;
     private int dragging = -1;
     private final Btn fullscreen, display, hints, difficulty;
+    private Btn cheat; // debug builds only
 
     public OptionsScreen(BurgerRunGame g, Screen returnTo) {
         super(g);
@@ -48,6 +49,14 @@ public final class OptionsScreen extends Screen {
             });
         }));
         add(new Btn(60, 590, 300, 80, "BACK", 0xFF8A6A50, this::back));
+        if (g.saves.debugBuild) {
+            cheat = add(new Btn(380, 590, 360, 80, "", 0xFF7A4FB0, () -> {
+                s.infiniteMoney = !s.infiniteMoney;
+                game.topUpCheat();
+                game.persist();
+                sync();
+            }));
+        }
         for (Btn b : buttons) b.textSize = 24;
         sync();
     }
@@ -57,6 +66,7 @@ public final class OptionsScreen extends Screen {
         display.label = "Display: " + (s.stretch ? "Stretch to fill" : "Fill (keep shape)");
         hints.label = "Tutorial & hints: " + (s.hints ? "ON" : "OFF");
         difficulty.label = "Patience: " + DIFF[s.difficulty];
+        if (cheat != null) cheat.label = "DEBUG Infinite money: " + (s.infiniteMoney ? "ON" : "OFF");
         game.saves.saveSettings();
     }
 
