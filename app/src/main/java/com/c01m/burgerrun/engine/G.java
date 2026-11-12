@@ -268,9 +268,12 @@ public final class G {
     // ---------------------------------------------------------------- small utilities
 
     public static String money(double v) {
-        long cents = Math.round(v * 100);
-        if (cents % 100 == 0) return "$" + cents / 100;
-        return String.format(java.util.Locale.US, "$%d.%02d", cents / 100, Math.abs(cents % 100));
+        // thousands separators; cents are dropped from $1,000 up so big balances stay short
+        String sign = v < 0 ? "-" : "";
+        long cents = Math.abs(Math.round(v * 100));
+        if (cents >= 100_000) return String.format(java.util.Locale.US, "%s$%,d", sign, Math.round(cents / 100.0));
+        if (cents % 100 == 0) return String.format(java.util.Locale.US, "%s$%,d", sign, cents / 100);
+        return String.format(java.util.Locale.US, "%s$%,d.%02d", sign, cents / 100, cents % 100);
     }
 
     public static int mix(int a, int b, float t) {

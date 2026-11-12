@@ -768,7 +768,7 @@ public final class GameScreen extends Screen implements ShiftManager.Listener {
         G.rrect(x + 16, PY + 274, 338, 183, 12, 0xFF7FA2A9);
         int used = 0;
         for (Customer o : s.active) if (!o.tray.empty()) used++;
-        G.text("TRAY  " + used + "/" + s.fx.trays + " in use", x + 185, PY + 250, 15, G.BROWN, 0, true);
+        G.text("Trays in use: " + used + " of " + s.fx.trays, x + 185, PY + 250, 15, G.BROWN, 0, true);
         if (c != null) drawTrayItems(c, ox);
 
         boolean ready = c != null && c.status == Customer.ORDERED && c.complete();
@@ -962,7 +962,9 @@ public final class GameScreen extends Screen implements ShiftManager.Listener {
         G.rect(G.left, 0, G.right - G.left, PY, 0xFF3A2416);
         G.rect(RAIL_X - 5, 124, G.right - RAIL_X + 5, 4, 0xFF8A6A50);
         G.rect(G.left, 0, 110 - G.left, PY, 0xFF2A1A10);
-        G.text(G.money(game.save.money + s.moneyEarned + s.tipsEarned), 55, 18, 22, G.MUSTARD, 0, true);
+        String cash = G.money(game.save.money + s.moneyEarned + s.tipsEarned);
+        float cashSize = Math.min(22, 22 * 100 / Math.max(1, G.width(cash, 22, true))); // shrink to fit the 110-wide box
+        G.text(cash, 55, 18, cashSize, G.MUSTARD, 0, true);
         G.text("Shift " + s.number, 55, 42, 16, G.WHITE, 0, true);
         G.text(s.remaining() + " to serve", 55, 62, 14, G.CREAM, 0, false);
         if (s.streak >= 2) {
@@ -1182,7 +1184,9 @@ public final class GameScreen extends Screen implements ShiftManager.Listener {
         for (int i = 0; i < s.baskets.length; i++) {
             Food.Basket b = s.baskets[i];
             Guide g = null;
-            if (b.state == Food.Basket.DOWN && Food.fryStage(b.p) >= 2) {
+            if (b.state != Food.Basket.EMPTY && Food.fryStage(b.p) == 4) {
+                g = dragTo("Burned! Drag that basket to the BIN", "Then fry a fresh batch", basketCx(i), basketCy(i), 53, TRASH_Y + 40);
+            } else if (b.state == Food.Basket.DOWN && Food.fryStage(b.p) >= 2) {
                 g = tapAt(Food.fryStage(b.p) == 2 ? "Golden! Tap the basket to lift it out" : "Lift the basket now, they're overcooking!",
                         "Fries keep cooking while they sit in the oil", basketCx(i), basketCy(i));
             } else if (b.state == Food.Basket.UP && b.p > 0 && s.packed == null) {
