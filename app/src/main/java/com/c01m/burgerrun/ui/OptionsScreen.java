@@ -3,6 +3,8 @@ package com.c01m.burgerrun.ui;
 import com.c01m.burgerrun.engine.Art;
 import com.c01m.burgerrun.engine.G;
 import com.c01m.burgerrun.engine.SaveSystem;
+import com.c01m.burgerrun.sim.Content;
+import com.c01m.burgerrun.sim.Progression;
 import com.c01m.burgerrun.sim.SaveData;
 
 /** Audio, display and gameplay settings, plus resetting the save. */
@@ -13,7 +15,7 @@ public final class OptionsScreen extends Screen {
     private final SaveSystem.Settings s;
     private int dragging = -1;
     private final Btn fullscreen, display, hints, difficulty;
-    private Btn cheat; // debug builds only
+    private Btn cheat, levelUp; // debug builds only
 
     public OptionsScreen(BurgerRunGame g, Screen returnTo) {
         super(g);
@@ -56,6 +58,7 @@ public final class OptionsScreen extends Screen {
                 game.persist();
                 sync();
             }));
+            levelUp = add(new Btn(760, 610, 460, 66, "", 0xFF7A4FB0, this::cheatLevelUp));
         }
         for (Btn b : buttons) b.textSize = 24;
         sync();
@@ -67,7 +70,28 @@ public final class OptionsScreen extends Screen {
         hints.label = "Tutorial & hints: " + (s.hints ? "ON" : "OFF");
         difficulty.label = "Patience: " + DIFF[s.difficulty];
         if (cheat != null) cheat.label = "DEBUG Infinite money: " + (s.infiniteMoney ? "ON" : "OFF");
+        if (levelUp != null) {
+            SaveData d = game.save != null ? game.save : game.saves.load();
+            levelUp.label = d == null ? "DEBUG Level up (no save yet)"
+                    : d.level >= Content.MAX_LEVEL ? "DEBUG Level " + d.level + " (max)"
+                    : "DEBUG Level up (now Lv " + d.level + ")";
+        }
         game.saves.saveSettings();
+    }
+
+    /** Debug cheat: jump one level, as if enough XP had been earned, and say what it unlocked. */
+    private void cheatLevelUp() {
+        SaveData d = game.save != null ? game.save : game.saves.load();
+        if (d == null) { game.notice("Start a new game first, then come back to level up."); return; }
+        if (d.level >= Content.MAX_LEVEL) { game.notice("Already at the max level (" + Content.MAX_LEVEL + ")."); return; }
+        d.level++;
+        d.xp = 0;
+        game.saves.save(d);
+        game.audio.play("buy");
+        sync();
+        java.util.List<String> unlocks = Progression.unlocksAt(d.level);
+        game.notice("Now level " + d.level + " (" + Progression.rank(d.level) + ")."
+                + (unlocks.isEmpty() ? "" : " Unlocked: " + String.join(", ", unlocks) + "."));
     }
 
     @Override public void back() {
