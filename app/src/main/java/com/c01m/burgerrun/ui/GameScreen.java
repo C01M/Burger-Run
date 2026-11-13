@@ -1094,7 +1094,7 @@ public final class GameScreen extends Screen implements ShiftManager.Listener {
         float y;
         boolean top = panTarget == PW;
         if (top) { x = PX + (PW - w) / 2; y = PY + 3; } // above the grill, clear of the station labels
-        else if (s.fridgeOpen) y = PY + 66;
+        else if (s.fridgeOpen) y = PY + 488; // low in the fridge, so it never covers a review card at the window
         else y = PY + 160; // on the counter, clear of the bun bins
 
         G.rrect(x, y, w, 36, 12, 0xF01F6A6A);
@@ -1438,6 +1438,13 @@ public final class GameScreen extends Screen implements ShiftManager.Listener {
         Food.Order o = c.order;
         boolean kitchen = panTarget == PW;
         if (c.complete()) return kitchen ? "Order ready: drag the background left to go to the counter" : "All done! Press SERVE";
+        // the grill and fryer are slow, so get them going before anything quick like the drink
+        boolean anyFries = s.packed != null || c.tray.fries != null;
+        for (Food.Basket b : s.baskets) if (b.state != Food.Basket.EMPTY) anyFries = true;
+        boolean anyPatty = s.grillCount() > 0 || c.tray.burger != null || s.boards[s.focusBoard()].patty() != null;
+        for (Food.Held h : s.cabinet) if (h != null) { if (h.fries != null) anyFries = true; else anyPatty = true; }
+        if (o.burger && !anyPatty) return kitchen ? "Tap or drag a raw patty onto the grill" : "Patties take longest: drag the background right to start one";
+        if (o.fries && !anyFries) return kitchen ? "Tap or drag Raw Fries into the basket" : "Drag the background right to start the fries";
         if (o.drink != null && c.tray.drink == null) {
             if (kitchen) return "Drag left to return to the counter for the drink";
             if (!s.fridgeOpen) return "Drag the DRINKS tab up to open the fridge";

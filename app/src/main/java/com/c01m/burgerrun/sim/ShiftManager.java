@@ -81,6 +81,8 @@ public final class ShiftManager {
 
     public int remaining() { return scheduled - served; }
     public int linedUp() { return scheduled - spawned; }
+    private final java.util.Set<String> seenThisShift = new java.util.HashSet<>();
+
     public boolean tutorialHold() { return tutorial && served == 0; }
 
     static Food.Order tutorialOrder() {
@@ -144,9 +146,19 @@ public final class ShiftManager {
     }
 
     private Content.CustomerDef chooseCustomer() {
+        Content.CustomerDef d = chooseCustomer(true);
+        if (d == null) d = chooseCustomer(false); // everyone has been in already: repeats are fine
+        if (d == null) d = Content.CUSTOMERS.get(rng.nextInt(5));
+        seenThisShift.add(d.id);
+        return d;
+    }
+
+    /** @param fresh skip customers who already came in this shift, so the same face is not back straight away */
+    private Content.CustomerDef chooseCustomer(boolean fresh) {
         List<Content.CustomerDef> pool = new ArrayList<>();
         for (Content.CustomerDef d : Content.CUSTOMERS) {
             if (d.level > save.level || isPresent(d)) continue;
+            if (fresh && seenThisShift.contains(d.id)) continue;
             if ((number == 1 || tutorial) && d.arch != Content.Arch.EASY && spawned < 2) continue;
             if (d.arch == Content.Arch.CRITIC && special != Content.Special.CRITICS && rng.nextDouble() > .35) continue;
             pool.add(d);
@@ -160,7 +172,7 @@ public final class ShiftManager {
             }
             if (!themed.isEmpty()) pool = themed;
         }
-        if (pool.isEmpty()) return Content.CUSTOMERS.get(rng.nextInt(5));
+        if (pool.isEmpty()) return null;
         return pool.get(rng.nextInt(pool.size()));
     }
 
